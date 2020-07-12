@@ -1,29 +1,31 @@
 const next = require("next");
 const express = require("express");
+const axios = require("axios");
+const cookieParser = require("cookie-parser");
+
 const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
 const app = next({ dev });
-const Axios = require("axios");
-const cookieParser = require("cookie-parser");
 const handle = app.getRequestHandler();
 
-const COOKIE_SECRET = "1sg253680sdfg#$^#Q$^#@$^5s5g2";
 const AUTH_USER_TYPE = "authenticated";
-const cookieOptions = {
+const COOKIE_SECRET = "asldkfjals23ljk";
+const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: !dev,
-  signed: true,
+  signed: true
 };
 
-async function authenticate(email, password) {
-  const { data } = await Axios.get(
+const authenticate = async (email, password) => {
+  const { data } = await axios.get(
     "https://jsonplaceholder.typicode.com/users"
   );
-
-  return data.find((user) => {
-    if (user.email === email && user.website === password) return user;
+  return data.find(user => {
+    if (user.email === email && user.website === password) {
+      return user;
+    }
   });
-}
+};
 
 app.prepare().then(() => {
   const server = express();
@@ -34,39 +36,42 @@ app.prepare().then(() => {
   server.post("/api/login", async (req, res) => {
     const { email, password } = req.body;
     const user = await authenticate(email, password);
-
-    if (!user) return res.status(403).send("Invalid email or password");
-
+    if (!user) {
+      return res.status(403).send("Invalid email or password");
+    }
     const userData = {
       name: user.name,
       email: user.email,
-      type: AUTH_USER_TYPE,
+      type: AUTH_USER_TYPE
     };
+    res.cookie("token", userData, COOKIE_OPTIONS);
+    res.json(userData);
+  });
 
-    res.cookie("token", userData, cookieOptions);
-    res.send(userData);
+  server.post("/api/logout", (req, res) => {
+    res.clearCookie("token", COOKIE_OPTIONS);
+    res.sendStatus(204);
   });
 
   server.get("/api/profile", async (req, res) => {
     const { signedCookies = {} } = req;
     const { token } = signedCookies;
-
     if (token && token.email) {
-      const { data } = await Axios.get(
+      const { data } = await axios.get(
         "https://jsonplaceholder.typicode.com/users"
       );
-      const userProfile = data.find((user) => user.email === token.email);
-
+      const userProfile = data.find(user => user.email === token.email);
       return res.json({ user: userProfile });
     }
-
     res.sendStatus(404);
   });
 
-  server.get("*", (req, res) => handle(req, res));
+  server.get("*", (req, res) => {
+    return handle(req, res);
+  });
 
-  server.listen(port, (err) => {
+  server.listen(port, err => {
     if (err) throw err;
-    console.log(`Server is listening on PORT: ${port}`);
+    console.log(`Listening on PORT ${port}`);
   });
 });

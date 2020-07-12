@@ -1,16 +1,18 @@
 import Link from "next/link";
 import Head from "next/head";
-import Router, { useRouter } from "next/router";
+import { useRouter } from "next/router";
+import { logoutUser } from "../lib/auth";
 
 // https://github.com/vercel/next.js/issues/1935#issuecomment-648660605
 
-function Layout({ children, pageTitle, docTitle, userFullName }) {
+function Layout({ children, pageTitle, docTitle, userFullName, auth }) {
   const router = useRouter();
+  const { user = {} } = auth || {};
 
   return (
     <div className="o-page">
       <Head>
-        <title>{docTitle || "Next Hacker"}</title>
+        <title>{docTitle || "Home"}</title>
       </Head>
       <header>
         <h1
@@ -23,7 +25,7 @@ function Layout({ children, pageTitle, docTitle, userFullName }) {
           }
         >
           {router.pathname === "/"
-            ? "Welcome, Guest"
+            ? `Welcome, ${user.name || "Guest."}`
             : router.pathname === "/profile"
             ? userFullName
             : docTitle}
@@ -32,32 +34,32 @@ function Layout({ children, pageTitle, docTitle, userFullName }) {
           <Link href="/">
             <a>Home</a>
           </Link>
-          <Link href="/login">
-            <a>Login</a>
-          </Link>
-          <Link href="/profile">
-            <a>Profile</a>
-          </Link>
-          <a
-            href="#0"
-            onClick={(e) => {
-              e.preventDefault();
-            }}
-          >
-            Sign out
-          </a>
+          {user.email ? (
+            <>
+              <Link href="/profile">
+                <a>My Profile</a>
+              </Link>
+              <a onClick={logoutUser}>Sign out</a>
+            </> //
+          ) : (
+            <Link href="/login">
+              <a>Login</a>
+            </Link>
+          )}
         </nav>
       </header>
       <main className="o-main">
         <h2 className="c-page-title">
-          {router.pathname === "/" ? "Welcome, Guest" : pageTitle}
+          {router.pathname === "/"
+            ? `Welcome, ${user.name || "Guest."}`
+            : pageTitle}
         </h2>
 
         {children}
       </main>
       <footer>
         <span>
-          A Hacker News clone made with Next.js -{" "}
+          Cookie authentication with Next.js -{" "}
           <a href="http://ahmedhosna.netlify.com/" target="blank">
             {" "}
             Ahmed Hosna
@@ -66,14 +68,12 @@ function Layout({ children, pageTitle, docTitle, userFullName }) {
         </span>
       </footer>
       <style jsx global>{`
-        @import url("https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap");
-
         body {
           max-width: 920px;
           margin: 0 auto;
           font-size: 16px;
           color: #343434;
-          font-family: Quicksand, system-ui, sans-serif;
+          font-family: "Quicksand", system-ui, sans-serif;
           padding: 0 0.75rem;
           scroll-behavior: smooth;
           background-attachment: fixed;
@@ -204,6 +204,7 @@ function Layout({ children, pageTitle, docTitle, userFullName }) {
           border-bottom: 3px solid transparent;
           display: inline-block;
           font-size: 14px;
+          cursor: pointer;
         }
 
         nav a:not(:last-child) {

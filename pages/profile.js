@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { getUserProfile } from "../lib/auth";
+import { getUserProfile, authInitialProps } from "../lib/auth";
 import Layout from "../components/Layout";
 
-function Profile() {
+function Profile(props) {
   const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
@@ -11,7 +11,7 @@ function Profile() {
 
   if (!userProfile) {
     return (
-      <Layout pageTitle="..." docTitle="..." userFullName="...">
+      <Layout pageTitle="..." docTitle="..." userFullName="..." {...props}>
         <p>Loading profile...</p>
       </Layout>
     );
@@ -22,10 +22,13 @@ function Profile() {
       pageTitle={`${userProfile.user.name} profile`}
       docTitle={`${userProfile.user.name} profile`}
       userFullName={userProfile.user.name}
+      {...props}
     >
       <pre>{JSON.stringify(userProfile, null, 2)}</pre>
     </Layout>
   );
 }
+
+Profile.getInitialProps = authInitialProps(true);
 
 export default Profile;
