@@ -10,6 +10,6 @@ function Login(props) {
   );
 }
 
-Login.getInitialProps = authInitialProps(true);
+Login.getInitialProps = authInitialProps();
 
 export default Login;
